@@ -1,0 +1,1 @@
+LangGraph is a framework for building stateful, multi-step AI agent workflows. It allows developers to define nodes and edges that control how an agent processes information and executes tasks.

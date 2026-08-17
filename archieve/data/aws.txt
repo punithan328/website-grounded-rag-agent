@@ -1,0 +1,1 @@
+Amazon Bedrock is a fully managed AWS service that provides access to foundation models through APIs. Developers can use foundation models for generative AI applications without managing the underlying model infrastructure.

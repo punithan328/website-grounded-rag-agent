@@ -1,0 +1,1 @@
+ChromaDB is an open-source vector database designed for AI applications. It can store documents, embeddings, metadata, and perform similarity searches against vector embeddings.

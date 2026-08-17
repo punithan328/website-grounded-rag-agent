@@ -1,0 +1,58 @@
+# ==============================
+# Core Agent / RAG Framework
+# ==============================
+langchain
+langgraph
+langchain-community
+
+# ==============================
+# UI
+# ==============================
+chainlit
+
+# ==============================
+# LLM Provider
+# Choose the provider you use
+# ==============================
+langchain-anthropic
+# langchain-openai
+
+# ==============================
+# Vector Database
+# ==============================
+chromadb
+
+# ==============================
+# Embeddings
+# ==============================
+sentence-transformers
+
+# ==============================
+# Web Crawling / Content Extraction
+# ==============================
+trafilatura
+beautifulsoup4
+lxml
+httpx
+
+# ==============================
+# Configuration / Validation
+# ==============================
+python-dotenv
+pydantic
+
+# ==============================
+# Token / Cost Analysis
+# ==============================
+tiktoken
+
+# ==============================
+# Testing
+# ==============================
+pytest
+pytest-asyncio
+
+# ==============================
+# Code Quality
+# ==============================
+ruff
