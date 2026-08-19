@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Website-Grounded RAG Agent Architecture</title>
+  <desc id="desc">Diagram showing crawling, extraction, embeddings, vector store, retrieval, LangGraph agent workflow, and final grounded answer output.</desc>
+
+  <defs>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #1f2937; }
+      .label { font: 600 16px Arial, sans-serif; fill: #111827; }
+      .small { font: 500 13px Arial, sans-serif; fill: #374151; }
+      .box { fill: #eef6ff; stroke: #3b82f6; stroke-width: 2; rx: 16; }
+      .box-alt { fill: #ecfdf5; stroke: #10b981; stroke-width: 2; rx: 16; }
+      .box-warn { fill: #fff7ed; stroke: #f59e0b; stroke-width: 2; rx: 16; }
+      .box-dark { fill: #f3f4f6; stroke: #6b7280; stroke-width: 2; rx: 16; }
+      .arrow { stroke: #374151; stroke-width: 2.5; fill: none; marker-end: url(#arrowhead); }
+      .thin { stroke: #9ca3af; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead2); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#374151"/>
+    </marker>
+    <marker id="arrowhead2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#9ca3af"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="48" text-anchor="middle" class="title">Website-Grounded RAG Agent</text>
+
+  <!-- Left - crawl -->
+  <rect x="60" y="120" width="170" height="90" class="box"/>
+  <text x="145" y="158" text-anchor="middle" class="label">Seed URL</text>
+  <text x="145" y="180" text-anchor="middle" class="small">Sitemap /</text>
+  <text x="145" y="198" text-anchor="middle" class="small">Internal links</text>
+
+  <rect x="300" y="120" width="180" height="90" class="box-alt"/>
+  <text x="390" y="158" text-anchor="middle" class="label">Crawler</text>
+  <text x="390" y="180" text-anchor="middle" class="small">Fetch HTML</text>
+  <text x="390" y="198" text-anchor="middle" class="small">Discover pages</text>
+
+  <rect x="540" y="120" width="200" height="90" class="box-warn"/>
+  <text x="640" y="158" text-anchor="middle" class="label">Extractor + Cleaner</text>
+  <text x="640" y="180" text-anchor="middle" class="small">Remove noise</text>
+  <text x="640" y="198" text-anchor="middle" class="small">Normalize content</text>
+
+  <rect x="820" y="120" width="180" height="90" class="box-dark"/>
+  <text x="910" y="158" text-anchor="middle" class="label">Chunker</text>
+  <text x="910" y="180" text-anchor="middle" class="small">Section-aware</text>
+  <text x="910" y="198" text-anchor="middle" class="small">Paragraph chunks</text>
+
+  <!-- Middle - vector store -->
+  <rect x="280" y="310" width="240" height="110" class="box"/>
+  <text x="400" y="346" text-anchor="middle" class="label">Embeddings</text>
+  <text x="400" y="368" text-anchor="middle" class="small">SentenceTransformer</text>
+  <text x="400" y="390" text-anchor="middle" class="small">all-MiniLM-L6-v2</text>
+
+  <rect x="570" y="310" width="240" height="110" class="box-alt"/>
+  <text x="690" y="346" text-anchor="middle" class="label">Vector Store</text>
+  <text x="690" y="368" text-anchor="middle" class="small">ChromaDB</text>
+  <text x="690" y="390" text-anchor="middle" class="small">Chunk + metadata + URLs</text>
+
+  <!-- Right - retrieval + agent -->
+  <rect x="310" y="500" width="240" height="115" class="box"/>
+  <text x="430" y="536" text-anchor="middle" class="label">Retriever</text>
+  <text x="430" y="558" text-anchor="middle" class="small">Top-k semantic match</text>
+  <text x="430" y="580" text-anchor="middle" class="small">Rank by distance</text>
+
+  <rect x="610" y="500" width="280" height="115" class="box-warn"/>
+  <text x="750" y="536" text-anchor="middle" class="label">LangGraph Agent</text>
+  <text x="750" y="558" text-anchor="middle" class="small">retrieve → evaluate → generate</text>
+  <text x="750" y="580" text-anchor="middle" class="small">ground → finalize</text>
+
+  <!-- Output -->
+  <rect x="935" y="500" width="200" height="115" class="box-alt"/>
+  <text x="1035" y="536" text-anchor="middle" class="label">Final Response</text>
+  <text x="1035" y="558" text-anchor="middle" class="small">Grounded answer</text>
+  <text x="1035" y="580" text-anchor="middle" class="small">with source URLs</text>
+
+  <!-- arrows -->
+  <path d="M230 165 H300" class="arrow"/>
+  <path d="M480 165 H540" class="arrow"/>
+  <path d="M740 165 H820" class="arrow"/>
+
+  <path d="M910 210 L910 260 L400 260 L400 310" class="thin"/>
+  <path d="M400 420 L400 500" class="arrow"/>
+  <path d="M690 420 L690 500" class="arrow"/>
+  <path d="M530 560 H610" class="arrow"/>
+  <path d="M890 560 H935" class="arrow"/>
+
+  <path d="M145 210 L145 260 L400 260" class="thin"/>
+  <path d="M640 210 L640 260 L690 260" class="thin"/>
+
+</svg>

@@ -17,6 +17,8 @@ This solution is designed to satisfy the MyAdvice AI Engineer assessment require
 
 ## Architecture
 
+![Website-grounded RAG architecture](architecture-diagram.svg)
+
 ```mermaid
 flowchart LR
     A[Seed URL / Sitemap] --> B[Crawler + Link Discovery]
