@@ -8,6 +8,7 @@ from app.ingestion.url_manager import (
     normalize_url,
     is_valid_page_url,
 )
+from app.logger import logger
 
 
 class SitemapDiscovery:
@@ -135,20 +136,14 @@ class SitemapDiscovery:
 
         for sitemap_url in sitemap_urls:
 
-            print(
-                f"Checking sitemap: {sitemap_url}"
-            )
+            logger.info("Checking sitemap: %s", sitemap_url)
 
             xml_content = self.fetch_sitemap(
                 sitemap_url
             )
 
             if not xml_content:
-
-                print(
-                    f"  Sitemap unavailable: "
-                    f"{sitemap_url}"
-                )
+                logger.info("Sitemap unavailable: %s", sitemap_url)
 
                 continue
 
@@ -156,9 +151,7 @@ class SitemapDiscovery:
                 xml_content
             )
 
-            print(
-                f"  Found {len(urls)} valid URLs"
-            )
+            logger.info("Found %s valid URLs in %s", len(urls), sitemap_url)
 
             discovered_urls.extend(
                 urls
@@ -295,14 +288,10 @@ class SitemapDiscovery:
                 f"{origin}/sitemap_index.xml",
             ]
 
-        print(
-            f"\nSitemap candidates:"
-        )
+        logger.info("Sitemap candidates:")
 
         for sitemap_url in sitemap_urls:
-            print(
-                f"  - {sitemap_url}"
-            )
+            logger.info("  - %s", sitemap_url)
 
         # ----------------------------------------------------
         # Discover pages

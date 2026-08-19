@@ -105,7 +105,7 @@ def test_page_lifecycle(tmp_path):
         "https://docs.trychroma.com/docs"
     )
 
-    assert page["status"] == "embedded"
+    assert page["status"] == "indexed"
     assert page["chunk_count"] == 1
 
     assert registry.is_page_unchanged(
@@ -114,7 +114,44 @@ def test_page_lifecycle(tmp_path):
         content_hash="abc123"
     )
 
+# def test_chunks_table_has_token_count_column(
+#     registry,
+# ):
+#     with registry._connect() as conn:
 
+#         columns = {
+#             row["name"]
+#             for row in conn.execute(
+#                 "PRAGMA table_info(chunks)"
+#             ).fetchall()
+#         }
+
+#     assert "token_count" in columns
+def test_chunks_table_has_token_count_column(
+    tmp_path,
+):
+    from app.ingestion.registry import (
+        IngestionRegistry,
+    )
+
+    db_path = tmp_path / "test_registry.db"
+
+    registry = IngestionRegistry(
+        db_path
+    )
+
+    with registry._connect() as conn:
+
+        columns = {
+            row["name"]
+            for row in conn.execute(
+                "PRAGMA table_info(chunks)"
+            ).fetchall()
+        }
+
+    assert "token_count" in columns
+    
+    
 def test_changed_page_requires_reingestion(tmp_path):
 
     db_path = tmp_path / "test_ingestion.db"

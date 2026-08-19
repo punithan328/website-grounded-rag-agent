@@ -1,0 +1,89 @@
+[
+  {
+    "id": "q01",
+    "category": "straightforward",
+    "question": "How does ranking work in Chroma?",
+    "expected_urls": [
+      "https://docs.trychroma.com/cloud/search-api/ranking"
+    ],
+    "answerable": true
+  },
+  {
+    "id": "q02",
+    "category": "straightforward",
+    "question": "How does hybrid search work in Chroma?",
+    "expected_urls": [
+      "https://docs.trychroma.com/cloud/search-api/hybrid-search"
+    ],
+    "answerable": true
+  },
+  {
+    "id": "q03",
+    "category": "straightforward",
+    "question": "How can search results be filtered in Chroma?",
+    "expected_urls": [
+      "https://docs.trychroma.com/cloud/search-api/filters"
+    ],
+    "answerable": true
+  },
+  {
+    "id": "q04",
+    "category": "paraphrased",
+    "question": "What happens when multiple ranking expressions are combined?",
+    "expected_urls": [
+      "https://docs.trychroma.com/cloud/search-api/ranking"
+    ],
+    "answerable": true
+  },
+  {
+    "id": "q05",
+    "category": "paraphrased",
+    "question": "How can I narrow down which documents are returned by a search?",
+    "expected_urls": [
+      "https://docs.trychroma.com/cloud/search-api/filters"
+    ],
+    "answerable": true
+  },
+  {
+    "id": "q06",
+    "category": "paraphrased",
+    "question": "What does Chroma use to determine how similar two search results are?",
+    "expected_urls": [
+      "https://docs.trychroma.com/cloud/search-api/ranking"
+    ],
+    "answerable": true
+  },
+  {
+    "id": "q07",
+    "category": "multi_page",
+    "question": "How do filtering and ranking work together in Chroma search?",
+    "expected_urls": [
+      "https://docs.trychroma.com/cloud/search-api/filters",
+      "https://docs.trychroma.com/cloud/search-api/ranking"
+    ],
+    "answerable": true
+  },
+  {
+    "id": "q08",
+    "category": "misleading",
+    "question": "Does Chroma ranking use lower scores to indicate worse matches?",
+    "expected_urls": [
+      "https://docs.trychroma.com/cloud/search-api/ranking"
+    ],
+    "answerable": true
+  },
+  {
+    "id": "q09",
+    "category": "unanswerable",
+    "question": "What is the current price of a Chroma Cloud enterprise subscription?",
+    "expected_urls": [],
+    "answerable": false
+  },
+  {
+    "id": "q10",
+    "category": "unanswerable",
+    "question": "Who founded Chroma and what year was the company founded?",
+    "expected_urls": [],
+    "answerable": false
+  }
+]

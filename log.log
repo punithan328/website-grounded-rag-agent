@@ -1,0 +1,48 @@
+2026-08-19 08:59:06 INFO website_rag: Imported app.ingestion.registry OK
+2026-08-19 08:59:06 ERROR website_rag: ERROR importing app.ingestion.crawler: unindent does not match any outer indentation level (crawler.py, line 249)
+Traceback (most recent call last):
+  File "C:\Users\Punithan\Desktop\WEB_RAG_AGENT\website-grounded-rag-agent\scripts\check_imports.py", line 28, in <module>
+    mod = __import__(m, fromlist=['*'])
+  File "C:\Users\Punithan\Desktop\WEB_RAG_AGENT\website-grounded-rag-agent\app\ingestion\crawler.py", line 249
+    return None
+               ^
+IndentationError: unindent does not match any outer indentation level
+2026-08-19 09:00:08 INFO website_rag: Imported app.ingestion.registry OK
+2026-08-19 09:00:09 INFO website_rag: Imported app.ingestion.crawler OK
+2026-08-19 09:00:10 ERROR website_rag: ERROR importing app.ingestion.pipeline: No module named 'sentence_transformers'
+Traceback (most recent call last):
+  File "C:\Users\Punithan\Desktop\WEB_RAG_AGENT\website-grounded-rag-agent\scripts\check_imports.py", line 28, in <module>
+    mod = __import__(m, fromlist=['*'])
+  File "C:\Users\Punithan\Desktop\WEB_RAG_AGENT\website-grounded-rag-agent\app\ingestion\pipeline.py", line 14, in <module>
+    from app.embedding.embedder import (
+        SentenceTransformerEmbedder,
+    )
+  File "C:\Users\Punithan\Desktop\WEB_RAG_AGENT\website-grounded-rag-agent\app\embedding\embedder.py", line 4, in <module>
+    from sentence_transformers import SentenceTransformer
+ModuleNotFoundError: No module named 'sentence_transformers'
+2026-08-19 09:01:56 INFO website_rag: Imported app.ingestion.registry OK
+2026-08-19 09:01:57 INFO website_rag: Imported app.ingestion.crawler OK
+2026-08-19 09:01:57 ERROR website_rag: ERROR importing app.ingestion.pipeline: No module named 'sentence_transformers'
+Traceback (most recent call last):
+  File "C:\Users\Punithan\Desktop\WEB_RAG_AGENT\website-grounded-rag-agent\scripts\check_imports.py", line 28, in <module>
+    mod = __import__(m, fromlist=['*'])
+  File "C:\Users\Punithan\Desktop\WEB_RAG_AGENT\website-grounded-rag-agent\app\ingestion\pipeline.py", line 14, in <module>
+    from app.embedding.embedder import (
+        SentenceTransformerEmbedder,
+    )
+  File "C:\Users\Punithan\Desktop\WEB_RAG_AGENT\website-grounded-rag-agent\app\embedding\embedder.py", line 4, in <module>
+    from sentence_transformers import SentenceTransformer
+ModuleNotFoundError: No module named 'sentence_transformers'
+2026-08-19 09:03:30 INFO website_rag: Imported app.ingestion.registry OK
+2026-08-19 09:03:31 INFO website_rag: Imported app.ingestion.crawler OK
+2026-08-19 09:03:31 ERROR website_rag: ERROR importing app.ingestion.pipeline: No module named 'sentence_transformers'
+Traceback (most recent call last):
+  File "C:\Users\Punithan\Desktop\WEB_RAG_AGENT\website-grounded-rag-agent\scripts\check_imports.py", line 28, in <module>
+    mod = __import__(m, fromlist=['*'])
+  File "C:\Users\Punithan\Desktop\WEB_RAG_AGENT\website-grounded-rag-agent\app\ingestion\pipeline.py", line 14, in <module>
+    from app.embedding.embedder import (
+        SentenceTransformerEmbedder,
+    )
+  File "C:\Users\Punithan\Desktop\WEB_RAG_AGENT\website-grounded-rag-agent\app\embedding\embedder.py", line 4, in <module>
+    from sentence_transformers import SentenceTransformer
+ModuleNotFoundError: No module named 'sentence_transformers'

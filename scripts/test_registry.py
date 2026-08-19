@@ -24,3 +24,4 @@ stats = registry.get_statistics()
 
 for key, value in stats.items():
     print(f"{key}: {value}")
+    

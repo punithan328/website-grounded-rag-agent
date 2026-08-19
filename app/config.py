@@ -109,3 +109,79 @@ CHROMA_COLLECTION_NAME = os.getenv(
 # ============================================================
 
 REGISTRY_DB = DATABASE_DIR / "ingestion.db"
+
+MAX_RETRIES = int(
+    os.getenv("MAX_RETRIES", "3")
+)
+
+USER_AGENT = os.getenv(
+    "USER_AGENT",
+    "WebsiteGroundedRAGAgent/1.0"
+)
+
+CRAWL_RAW_HTML = (
+    os.getenv("CRAWL_RAW_HTML", "true").lower()
+    == "true"
+)
+
+CHROMA_DIR = (
+    BASE_DIR
+    / "data"
+    / "chroma"
+)
+
+# CHROMA_COLLECTION_NAME = os.getenv(
+#     "CHROMA_COLLECTION_NAME",
+#     "website_knowledge",
+# )
+CHROMA_COLLECTION_NAME = os.getenv(
+    "CHROMA_COLLECTION_NAME",
+    "chromadb_docs",
+)
+EMBEDDING_MODEL = os.getenv(
+    "EMBEDDING_MODEL",
+    "all-MiniLM-L6-v2",
+)
+
+EMBEDDING_BATCH_SIZE = int(
+    os.getenv(
+        "EMBEDDING_BATCH_SIZE",
+        "32",
+    )
+)
+
+import os
+
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+
+OPENROUTER_API_KEY = os.getenv(
+    "OPENROUTER_API_KEY"
+)
+
+OPENROUTER_BASE_URL = os.getenv(
+    "OPENROUTER_BASE_URL",
+    "https://openrouter.ai/api/v1",
+)
+
+OPENROUTER_MODEL = os.getenv(
+    "OPENROUTER_MODEL",
+    "openai/gpt-5.2",
+)
+
+OPENROUTER_MAX_TOKENS = int(
+    os.getenv(
+        "OPENROUTER_MAX_TOKENS",
+        "1000",
+    )
+)
+
+OPENROUTER_TEMPERATURE = float(
+    os.getenv(
+        "OPENROUTER_TEMPERATURE",
+        "0",
+    )
+)

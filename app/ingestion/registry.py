@@ -2,6 +2,21 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+from app.logger import logger
+
+INGESTION_STATUS_DISCOVERED = "discovered"
+
+INGESTION_STATUS_CRAWLED = "crawled"
+
+INGESTION_STATUS_EXTRACTED = "extracted"
+
+INGESTION_STATUS_CHUNKED = "chunked"
+
+INGESTION_STATUS_INDEXED = "indexed"
+
+INGESTION_STATUS_FAILED = "failed"
+ 
+INGESTION_STATUS_REJECTED = "rejected"
 
 
 class IngestionRegistry:
@@ -20,11 +35,198 @@ class IngestionRegistry:
         )
 
         self._initialize_database()
+        self._migrate_schema()
+        
+    def _migrate_schema(self) -> None:
+        """
+        Apply incremental SQLite schema migrations
+        for the chunks table.
+        """
 
+        with self._connect() as conn:
+
+            # ----------------------------------------------------
+            # Check whether chunks table exists
+            # ----------------------------------------------------
+
+            table_exists = conn.execute(
+                """
+                SELECT name
+                FROM sqlite_master
+                WHERE type = 'table'
+                AND name = 'chunks'
+                """
+            ).fetchone()
+
+            if not table_exists:
+                return
+
+            # ----------------------------------------------------
+            # Existing columns
+            # ----------------------------------------------------
+
+            columns = {
+                row["name"]
+                for row in conn.execute(
+                    "PRAGMA table_info(chunks)"
+                ).fetchall()
+            }
+
+            # ----------------------------------------------------
+            # Add missing columns
+            # ----------------------------------------------------
+
+            migrations = {
+                "token_count": """
+                    ALTER TABLE chunks
+                    ADD COLUMN token_count INTEGER
+                """,
+
+                "chunk_type": """
+                    ALTER TABLE chunks
+                    ADD COLUMN chunk_type TEXT
+                """,
+            }
+
+            for column_name, sql in migrations.items():
+
+                if column_name not in columns:
+
+                    logger.info(
+                        "Applying migration: chunks.%s",
+                        column_name,
+                    )
+
+                    conn.execute(sql)
+
+            conn.commit()
+            
+    def get_chunk_ids(
+        self,
+        page_id: int,
+    ) -> list[str]:
+
+        with self._connect() as conn:
+
+            rows = conn.execute(
+                """
+                SELECT chunk_id
+                FROM chunks
+                WHERE page_id = ?
+                ORDER BY chunk_index
+                """,
+                (page_id,),
+            ).fetchall()
+
+        return [
+            row["chunk_id"]
+            for row in rows
+        ]
+        
+    def delete_chunks(
+        self,
+        page_id: int,
+    ) -> None:
+
+        with self._connect() as conn:
+
+            conn.execute(
+                """
+                DELETE FROM chunks
+                WHERE page_id = ?
+                """,
+                (page_id,),
+            )
+
+            conn.commit()
+    def update_page_content_hash(
+        self,
+        page_id: int,
+        content_hash: str,
+    ) -> None:
+
+        with self._connect() as conn:
+
+            conn.execute(
+                """
+                UPDATE pages
+                SET content_hash = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (
+                    content_hash,
+                    page_id,
+                ),
+            )
+
+            conn.commit()
+        
+    def register_chunks(
+    self,
+    chunks,
+    embedding_model: Optional[str] = None,
+) -> None:
+
+        with self._connect() as conn:
+
+            for chunk in chunks:
+
+                conn.execute(
+                    """
+                    INSERT OR REPLACE INTO chunks (
+                        chunk_id,
+                        page_id,
+                        chunk_index,
+                        content_hash,
+                        chroma_id,
+                        embedding_model,
+                        created_at,
+                        token_count,
+                        chunk_type
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        chunk.chunk_id,
+                        chunk.page_id,
+                        chunk.chunk_index,
+                        chunk.content_hash,
+                        chunk.chroma_id,
+                        embedding_model,
+                        self._now(),
+                        chunk.token_count,
+                        chunk.chunk_type,
+                    ),
+                )
+
+            conn.commit()
     # ========================================================
     # Database connection
     # ========================================================
+    def update_page_status(
+        self,
+        page_id: int,
+        status: str,
+    ) -> None:
 
+        with self._connect() as conn:
+
+            conn.execute(
+                """
+                UPDATE pages
+                SET status = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (
+                    status,
+                    page_id,
+                ),
+            )
+
+            conn.commit()
+        
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(
             self.db_path
@@ -108,6 +310,9 @@ class IngestionRegistry:
                     chroma_id TEXT,
 
                     embedding_model TEXT,
+                    token_count INTEGER NOT NULL,
+
+    chunk_type TEXT NOT NULL,
 
                     created_at TEXT NOT NULL,
 
@@ -215,6 +420,22 @@ class IngestionRegistry:
                 )
             ).fetchone()
 
+    def get_page_by_id(
+        self,
+        page_id: int,
+    ) -> Optional[sqlite3.Row]:
+
+        with self._connect() as connection:
+
+            return connection.execute(
+                """
+                SELECT *
+                FROM pages
+                WHERE id = ?
+                """,
+                (page_id,)
+            ).fetchone()
+
     def upsert_page(
         self,
         website_id: int,
@@ -229,10 +450,9 @@ class IngestionRegistry:
         now = self._now()
 
         with self._connect() as connection:
-
             existing = connection.execute(
                 """
-                SELECT id
+                SELECT id, content_hash
                 FROM pages
                 WHERE website_id = ?
                   AND canonical_url = ?
@@ -245,13 +465,15 @@ class IngestionRegistry:
 
             if existing:
 
+                # Preserve existing content_hash when caller
+                # does not provide a new canonical hash (None).
                 connection.execute(
                     """
                     UPDATE pages
                     SET
                         url = ?,
                         title = ?,
-                        content_hash = ?,
+                        content_hash = CASE WHEN ? IS NULL THEN content_hash ELSE ? END,
                         status = ?,
                         http_status = ?,
                         updated_at = ?
@@ -260,6 +482,7 @@ class IngestionRegistry:
                     (
                         url,
                         title,
+                        content_hash,
                         content_hash,
                         status,
                         http_status,
@@ -343,34 +566,36 @@ class IngestionRegistry:
                 """
                 UPDATE pages
                 SET
-                    status = 'embedded',
+                    status = ?,
                     last_embedded_at = ?,
                     chunk_count = ?,
                     updated_at = ?
                 WHERE id = ?
                 """,
                 (
+                    INGESTION_STATUS_INDEXED,
                     now,
                     chunk_count,
                     now,
-                    page_id
+                    page_id,
                 )
             )
 
+            connection.commit()
     # ========================================================
     # Incremental ingestion check
     # ========================================================
 
     def is_page_unchanged(
-        self,
-        website_id: int,
-        canonical_url: str,
-        content_hash: str
-    ) -> bool:
+    self,
+    website_id: int,
+    canonical_url: str,
+    content_hash: str,
+) -> bool:
 
         page = self.get_page(
             website_id,
-            canonical_url
+            canonical_url,
         )
 
         if not page:
@@ -378,9 +603,9 @@ class IngestionRegistry:
 
         return (
             page["content_hash"] == content_hash
-            and page["status"] == "embedded"
+            and page["status"]
+            == INGESTION_STATUS_INDEXED
         )
-
     # ========================================================
     # Chunk operations
     # ========================================================
@@ -392,7 +617,9 @@ class IngestionRegistry:
         chunk_index: int,
         content_hash: str,
         chroma_id: Optional[str],
-        embedding_model: Optional[str]
+        embedding_model: Optional[str],
+        token_count: int = 0,
+        chunk_type: str = "text",
     ) -> int:
 
         now = self._now()
@@ -400,28 +627,32 @@ class IngestionRegistry:
         with self._connect() as connection:
 
             cursor = connection.execute(
-                """
-                INSERT OR REPLACE INTO chunks (
-                    chunk_id,
-                    page_id,
-                    chunk_index,
-                    content_hash,
-                    chroma_id,
-                    embedding_model,
-                    created_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    chunk_id,
-                    page_id,
-                    chunk_index,
-                    content_hash,
-                    chroma_id,
-                    embedding_model,
-                    now
-                )
-            )
+    """
+    INSERT OR REPLACE INTO chunks (
+        chunk_id,
+        page_id,
+        chunk_index,
+        content_hash,
+        chroma_id,
+        embedding_model,
+        created_at,
+        token_count,
+        chunk_type
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """,
+    (
+        chunk_id,
+        page_id,
+        chunk_index,
+        content_hash,
+        chroma_id,
+        embedding_model,
+        now,
+        token_count,
+        chunk_type,
+    )
+)
 
             return cursor.lastrowid
 
