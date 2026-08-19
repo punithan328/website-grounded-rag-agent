@@ -19,19 +19,6 @@ This solution is designed to satisfy the MyAdvice AI Engineer assessment require
 
 ![Website-grounded RAG architecture](architecture-diagram.svg)
 
-```mermaid
-flowchart LR
-    A[Seed URL / Sitemap] --> B[Crawler + Link Discovery]
-    B --> C[Extractor + Cleaner]
-    C --> D[Chunker + Metadata]
-    D --> E[Sentence Embeddings]
-    E --> F[ChromaDB Vector Store]
-    F --> G[Retriever]
-    G --> H[LangGraph Agent]
-    H --> I[Answer Generation]
-    I --> J[Grounding Check]
-    J --> K[Final answer + Sources]
-```
 
 ### Major components
 
