@@ -2,6 +2,7 @@ from typing import Sequence
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
+from app.logger import logger
 
 
 class SentenceTransformerEmbedder:
@@ -15,9 +16,15 @@ class SentenceTransformerEmbedder:
     ):
         self.model_name = model_name
 
-        self.model = SentenceTransformer(
-            model_name
-        )
+        logger.info("Initializing embedder with model %s", model_name)
+
+        try:
+            self.model = SentenceTransformer(
+                model_name
+            )
+        except Exception as exc:
+            logger.exception("Failed to load SentenceTransformer model: %s", exc)
+            raise
 
     # ========================================================
     # Single text

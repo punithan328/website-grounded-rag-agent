@@ -64,3 +64,6 @@ Proposed answer:
 
 {answer}
 """
+from app.logger import logger
+
+logger.info("Agent prompts loaded")

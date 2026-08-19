@@ -170,6 +170,7 @@
 import chainlit as cl
 
 from app.agent.graph import build_graph
+from app.logger import logger
 
 
 graph = build_graph()
@@ -177,6 +178,7 @@ graph = build_graph()
 
 @cl.on_chat_start
 async def on_chat_start():
+    logger.info("Chat session started")
 
     await cl.Message(
         content=(
@@ -221,6 +223,8 @@ async def on_message(message: cl.Message):
             "retrieved_documents",
             [],
         )
+
+        logger.info("Retrieved %s documents for query: %s", len(documents), query)
 
         step.output = (
             f"Retrieved {len(documents)} "
@@ -280,6 +284,7 @@ async def on_message(message: cl.Message):
             "No answer generated.",
         ),
     )
+    logger.info("Generated answer (length=%s): grounded=%s", len(answer), result.get("grounded", False))
 
     await cl.Message(
         content=answer

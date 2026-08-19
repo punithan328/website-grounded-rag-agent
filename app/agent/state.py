@@ -1,9 +1,13 @@
 from typing import TypedDict
 
 from app.retrieval.models import RetrievalResult
+from app.logger import logger
+
+logger.info("Agent state definitions loaded")
 
 
 class AgentState(TypedDict, total=False):
+    logger.info("Creating AgentState schema")
 
     # -------------------------------
     # User input
@@ -44,3 +48,5 @@ class AgentState(TypedDict, total=False):
     retry_count: int
 
     final_response: str
+
+    logger.info("AgentState schema ready")
