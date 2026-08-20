@@ -25,6 +25,8 @@ class AgentState(TypedDict, total=False):
 
     retrieval_relevant: bool
 
+    query_relevant: bool
+
     # -------------------------------
     # Generation
     # -------------------------------

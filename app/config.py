@@ -3,15 +3,15 @@ from dotenv import load_dotenv
 import os
 
 
-# Load environment variables
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables explicitly from the project root .env
+load_dotenv(BASE_DIR / ".env", override=False)
 
 
 # ============================================================
 # Project paths
 # ============================================================
-
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 DATA_DIR = BASE_DIR / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
@@ -149,14 +149,6 @@ EMBEDDING_BATCH_SIZE = int(
         "32",
     )
 )
-
-import os
-
-from dotenv import load_dotenv
-
-
-load_dotenv()
-
 
 OPENROUTER_API_KEY = os.getenv(
     "OPENROUTER_API_KEY"

@@ -158,9 +158,11 @@ from app.agent.nodes import (
     regenerate_node,
     no_answer_node,
     finalize_node,
+    should_retrieve_for_query,
 )
 
 from app.agent.routing import (
+    route_after_query_relevance,
     route_after_retrieval,
     route_after_grounding,
 )
@@ -176,6 +178,13 @@ def build_graph():
     )
 
     logger.info("StateGraph created successfully")
+    logger.info("Adding node: query_relevance")
+    workflow.add_node(
+        "query_relevance",
+        lambda state: {"query_relevant": should_retrieve_for_query(state.get("query", ""))},
+    )
+    logger.info("Node added: query_relevance")
+
     logger.info("Adding node: retrieve")
     workflow.add_node(
         "retrieve",
@@ -225,12 +234,23 @@ def build_graph():
     )
     logger.info("Node added: finalize")
 
-    logger.info("Adding edge: START -> retrieve")
+    logger.info("Adding edge: START -> query_relevance")
     workflow.add_edge(
         START,
-        "retrieve",
+        "query_relevance",
     )
-    logger.info("Edge added: START -> retrieve")
+    logger.info("Edge added: START -> query_relevance")
+
+    logger.info("Adding conditional edge from query_relevance with route_after_query_relevance")
+    workflow.add_conditional_edges(
+        "query_relevance",
+        route_after_query_relevance,
+        {
+            "retrieve": "retrieve",
+            "no_answer": "no_answer",
+        },
+    )
+    logger.info("Conditional edge added for query_relevance")
 
     logger.info("Adding edge: retrieve -> evaluate_retrieval")
     workflow.add_edge(
@@ -263,18 +283,12 @@ def build_graph():
         route_after_grounding,
         {
             "finalize": "finalize",
-            "regenerate": "regenerate",
             "no_answer": "no_answer",
         },
     )
     logger.info("Conditional edge added for grounding")
 
-    logger.info("Adding edge: regenerate -> generate")
-    workflow.add_edge(
-        "regenerate",
-        "generate",
-    )
-    logger.info("Edge added: regenerate -> generate")
+    logger.info("Skipping regenerate edge because grounded failures now stop in no_answer")
 
     logger.info("Adding edge: finalize -> END")
     workflow.add_edge(

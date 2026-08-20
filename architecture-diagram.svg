@@ -1,18 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
-  <title id="title">Website-Grounded RAG Agent Architecture</title>
-  <desc id="desc">Diagram showing crawling, extraction, embeddings, vector store, retrieval, LangGraph agent workflow, and final grounded answer output.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820" role="img" aria-labelledby="title desc">
+  <title id="title">Current Website-Grounded RAG Agent Architecture</title>
+  <desc id="desc">Diagram showing crawling, validation, indexing, retrieval, relevance filtering, answer generation, grounding validation, and strict no-context fallback for unsupported queries.</desc>
 
   <defs>
     <style>
-      .title { font: 700 28px Arial, sans-serif; fill: #1f2937; }
-      .label { font: 600 16px Arial, sans-serif; fill: #111827; }
+      .title { font: 700 30px Arial, sans-serif; fill: #111827; }
+      .label { font: 700 16px Arial, sans-serif; fill: #111827; }
       .small { font: 500 13px Arial, sans-serif; fill: #374151; }
-      .box { fill: #eef6ff; stroke: #3b82f6; stroke-width: 2; rx: 16; }
-      .box-alt { fill: #ecfdf5; stroke: #10b981; stroke-width: 2; rx: 16; }
-      .box-warn { fill: #fff7ed; stroke: #f59e0b; stroke-width: 2; rx: 16; }
-      .box-dark { fill: #f3f4f6; stroke: #6b7280; stroke-width: 2; rx: 16; }
+      .box { fill: #eef6ff; stroke: #2563eb; stroke-width: 2; rx: 18; }
+      .box-alt { fill: #ecfdf5; stroke: #10b981; stroke-width: 2; rx: 18; }
+      .box-warn { fill: #fff7ed; stroke: #f59e0b; stroke-width: 2; rx: 18; }
+      .box-red { fill: #fef2f2; stroke: #ef4444; stroke-width: 2; rx: 18; }
+      .box-dark { fill: #f3f4f6; stroke: #6b7280; stroke-width: 2; rx: 18; }
       .arrow { stroke: #374151; stroke-width: 2.5; fill: none; marker-end: url(#arrowhead); }
-      .thin { stroke: #9ca3af; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead2); }
+      .thin { stroke: #9ca3af; stroke-width: 1.6; fill: none; marker-end: url(#arrowhead2); }
+      .dashed { stroke: #ef4444; stroke-width: 2; stroke-dasharray: 8 6; fill: none; marker-end: url(#arrowhead3); }
     </style>
     <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
       <path d="M0,0 L8,4 L0,8 Z" fill="#374151"/>
@@ -20,71 +22,104 @@
     <marker id="arrowhead2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
       <path d="M0,0 L6,3 L0,6 Z" fill="#9ca3af"/>
     </marker>
+    <marker id="arrowhead3" markerWidth="10" markerHeight="8" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#ef4444"/>
+    </marker>
   </defs>
 
-  <text x="600" y="48" text-anchor="middle" class="title">Website-Grounded RAG Agent</text>
+  <text x="700" y="52" text-anchor="middle" class="title">Website-Grounded RAG Agent</text>
 
-  <!-- Left - crawl -->
-  <rect x="60" y="120" width="170" height="90" class="box"/>
-  <text x="145" y="158" text-anchor="middle" class="label">Seed URL</text>
-  <text x="145" y="180" text-anchor="middle" class="small">Sitemap /</text>
-  <text x="145" y="198" text-anchor="middle" class="small">Internal links</text>
+  <!-- Ingestion pipeline -->
+  <rect x="70" y="120" width="180" height="96" class="box"/>
+  <text x="160" y="158" text-anchor="middle" class="label">Seed URL</text>
+  <text x="160" y="178" text-anchor="middle" class="small">site root / sitemap</text>
 
-  <rect x="300" y="120" width="180" height="90" class="box-alt"/>
-  <text x="390" y="158" text-anchor="middle" class="label">Crawler</text>
-  <text x="390" y="180" text-anchor="middle" class="small">Fetch HTML</text>
-  <text x="390" y="198" text-anchor="middle" class="small">Discover pages</text>
+  <rect x="300" y="120" width="190" height="96" class="box-alt"/>
+  <text x="395" y="158" text-anchor="middle" class="label">Crawler</text>
+  <text x="395" y="178" text-anchor="middle" class="small">fetch HTML + discover pages</text>
 
-  <rect x="540" y="120" width="200" height="90" class="box-warn"/>
-  <text x="640" y="158" text-anchor="middle" class="label">Extractor + Cleaner</text>
-  <text x="640" y="180" text-anchor="middle" class="small">Remove noise</text>
-  <text x="640" y="198" text-anchor="middle" class="small">Normalize content</text>
+  <rect x="550" y="120" width="210" height="96" class="box-warn"/>
+  <text x="655" y="150" text-anchor="middle" class="label">Validator + Registry</text>
+  <text x="655" y="170" text-anchor="middle" class="small">reject unusable pages</text>
+  <text x="655" y="188" text-anchor="middle" class="small">track changed/unchanged</text>
 
-  <rect x="820" y="120" width="180" height="90" class="box-dark"/>
-  <text x="910" y="158" text-anchor="middle" class="label">Chunker</text>
-  <text x="910" y="180" text-anchor="middle" class="small">Section-aware</text>
-  <text x="910" y="198" text-anchor="middle" class="small">Paragraph chunks</text>
+  <rect x="820" y="120" width="220" height="96" class="box"/>
+  <text x="930" y="150" text-anchor="middle" class="label">Extractor + Cleaner</text>
+  <text x="930" y="170" text-anchor="middle" class="small">remove noise, scripts, boilerplate</text>
+  <text x="930" y="188" text-anchor="middle" class="small">normalize content</text>
 
-  <!-- Middle - vector store -->
-  <rect x="280" y="310" width="240" height="110" class="box"/>
-  <text x="400" y="346" text-anchor="middle" class="label">Embeddings</text>
-  <text x="400" y="368" text-anchor="middle" class="small">SentenceTransformer</text>
-  <text x="400" y="390" text-anchor="middle" class="small">all-MiniLM-L6-v2</text>
+  <rect x="1110" y="120" width="180" height="96" class="box-dark"/>
+  <text x="1200" y="150" text-anchor="middle" class="label">Chunker</text>
+  <text x="1200" y="170" text-anchor="middle" class="small">semantic sections</text>
+  <text x="1200" y="188" text-anchor="middle" class="small">split into chunks</text>
 
-  <rect x="570" y="310" width="240" height="110" class="box-alt"/>
-  <text x="690" y="346" text-anchor="middle" class="label">Vector Store</text>
-  <text x="690" y="368" text-anchor="middle" class="small">ChromaDB</text>
-  <text x="690" y="390" text-anchor="middle" class="small">Chunk + metadata + URLs</text>
+  <!-- Embedding + storage -->
+  <rect x="355" y="300" width="260" height="110" class="box"/>
+  <text x="485" y="338" text-anchor="middle" class="label">Embeddings</text>
+  <text x="485" y="360" text-anchor="middle" class="small">SentenceTransformers</text>
+  <text x="485" y="380" text-anchor="middle" class="small">all-MiniLM-L6-v2</text>
 
-  <!-- Right - retrieval + agent -->
-  <rect x="310" y="500" width="240" height="115" class="box"/>
-  <text x="430" y="536" text-anchor="middle" class="label">Retriever</text>
-  <text x="430" y="558" text-anchor="middle" class="small">Top-k semantic match</text>
-  <text x="430" y="580" text-anchor="middle" class="small">Rank by distance</text>
+  <rect x="700" y="300" width="290" height="110" class="box-alt"/>
+  <text x="845" y="338" text-anchor="middle" class="label">ChromaDB</text>
+  <text x="845" y="360" text-anchor="middle" class="small">chunks + metadata + source URLs</text>
+  <text x="845" y="380" text-anchor="middle" class="small">persistent vector index</text>
 
-  <rect x="610" y="500" width="280" height="115" class="box-warn"/>
-  <text x="750" y="536" text-anchor="middle" class="label">LangGraph Agent</text>
-  <text x="750" y="558" text-anchor="middle" class="small">retrieve → evaluate → generate</text>
-  <text x="750" y="580" text-anchor="middle" class="small">ground → finalize</text>
+  <!-- Query flow -->
+  <rect x="80" y="520" width="220" height="112" class="box-alt"/>
+  <text x="190" y="556" text-anchor="middle" class="label">User Query</text>
+  <text x="190" y="578" text-anchor="middle" class="small">question about indexed website</text>
+  <text x="190" y="598" text-anchor="middle" class="small">or unrelated / casual</text>
 
-  <!-- Output -->
-  <rect x="935" y="500" width="200" height="115" class="box-alt"/>
-  <text x="1035" y="536" text-anchor="middle" class="label">Final Response</text>
-  <text x="1035" y="558" text-anchor="middle" class="small">Grounded answer</text>
-  <text x="1035" y="580" text-anchor="middle" class="small">with source URLs</text>
+  <rect x="360" y="520" width="260" height="112" class="box"/>
+  <text x="490" y="556" text-anchor="middle" class="label">Query Relevance Gate</text>
+  <text x="490" y="578" text-anchor="middle" class="small">LLM decides if site context is needed</text>
+  <text x="490" y="598" text-anchor="middle" class="small">skip retrieval for unrelated queries</text>
 
-  <!-- arrows -->
-  <path d="M230 165 H300" class="arrow"/>
-  <path d="M480 165 H540" class="arrow"/>
-  <path d="M740 165 H820" class="arrow"/>
+  <rect x="700" y="520" width="230" height="112" class="box"/>
+  <text x="815" y="556" text-anchor="middle" class="label">Retriever</text>
+  <text x="815" y="578" text-anchor="middle" class="small">top-k semantic search</text>
+  <text x="815" y="598" text-anchor="middle" class="small">distance-based ranking</text>
 
-  <path d="M910 210 L910 260 L400 260 L400 310" class="thin"/>
-  <path d="M400 420 L400 500" class="arrow"/>
-  <path d="M690 420 L690 500" class="arrow"/>
-  <path d="M530 560 H610" class="arrow"/>
-  <path d="M890 560 H935" class="arrow"/>
+  <rect x="1000" y="520" width="250" height="112" class="box-warn"/>
+  <text x="1125" y="556" text-anchor="middle" class="label">Evaluate Retrieval</text>
+  <text x="1125" y="578" text-anchor="middle" class="small">is context relevant enough?</text>
+  <text x="1125" y="598" text-anchor="middle" class="small">if not → no-context fallback</text>
 
-  <path d="M145 210 L145 260 L400 260" class="thin"/>
-  <path d="M640 210 L640 260 L690 260" class="thin"/>
+  <rect x="355" y="680" width="300" height="110" class="box"/>
+  <text x="505" y="716" text-anchor="middle" class="label">Generate Answer</text>
+  <text x="505" y="738" text-anchor="middle" class="small">answer from retrieved website content only</text>
+  <text x="505" y="758" text-anchor="middle" class="small">no model memory fallback</text>
 
+  <rect x="710" y="680" width="320" height="110" class="box"/>
+  <text x="870" y="716" text-anchor="middle" class="label">Grounding Check</text>
+  <text x="870" y="738" text-anchor="middle" class="small">validate support against retrieved docs</text>
+  <text x="870" y="758" text-anchor="middle" class="small">final answer only if grounded</text>
+
+  <rect x="1090" y="680" width="200" height="110" class="box-red"/>
+  <text x="1190" y="716" text-anchor="middle" class="label">No Context</text>
+  <text x="1190" y="738" text-anchor="middle" class="small">strict refusal</text>
+  <text x="1190" y="758" text-anchor="middle" class="small">no raw snippets</text>
+
+  <!-- arrows to ingestion -->
+  <path d="M250 168 H300" class="arrow"/>
+  <path d="M490 168 H550" class="arrow"/>
+  <path d="M760 168 H820" class="arrow"/>
+  <path d="M1040 168 H1110" class="arrow"/>
+
+  <!-- indexing arrows -->
+  <path d="M930 216 L930 260 L485 260 L485 300" class="thin"/>
+  <path d="M845 216 L845 260 L845 300" class="thin"/>
+
+  <!-- query flow -->
+  <path d="M300 576 H360" class="arrow"/>
+  <path d="M620 576 H700" class="arrow"/>
+  <path d="M930 576 H1000" class="arrow"/>
+  <path d="M1125 632 L1125 680" class="dashed"/>
+
+  <path d="M760 632 L760 680 L655 680" class="arrow"/>
+  <path d="M505 790 L505 735" class="thin"/>
+  <path d="M655 735 H710" class="arrow"/>
+  <path d="M1030 735 H1090" class="dashed"/>
+
+  <path d="M870 790 L870 735" class="thin"/>
 </svg>

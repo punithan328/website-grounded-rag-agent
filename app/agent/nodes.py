@@ -308,10 +308,13 @@
 #         "final_response":
 #             answer + source_text
 #     }
-from app.agent.llm import get_llm
+import json
+
+from app.agent.llm import get_llm, invoke_with_backoff
 from app.agent.prompts import (
     SYSTEM_PROMPT,
     GROUNDING_PROMPT,
+    SITE_RELEVANCE_PROMPT,
 )
 from app.retrieval.retriever import WebsiteRetriever
 from app.logger import logger
@@ -324,11 +327,26 @@ logger.info("Agent nodes initialized: retriever and LLM ready")
 
 
 def parse_grounding_result(result: str) -> tuple[bool, str]:
-    """Normalize grounding output and tolerate extra text around the response."""
+    """Normalize grounding output and tolerate both JSON and legacy text responses."""
     normalized = (result or "").strip()
     if not normalized:
         logger.warning("Grounding result was empty; treating as NOT_GROUNDED")
         return False, "NOT_GROUNDED\nReason: No proposed answer was provided to evaluate against the retrieved website content."
+
+    try:
+        payload = json.loads(normalized)
+        if isinstance(payload, dict):
+            grounded = bool(payload.get("grounded", False))
+            reason = payload.get("reason") or ("supported by the retrieved website content" if grounded else "the answer could not be validated against the retrieved content")
+            return grounded, json.dumps({"grounded": grounded, "reason": reason}, ensure_ascii=False)
+        if isinstance(payload, str):
+            lowered = payload.strip().lower()
+            if lowered in {"grounded", "true"}:
+                return True, json.dumps({"grounded": True, "reason": "supported by the retrieved website content"}, ensure_ascii=False)
+            if lowered in {"not_grounded", "false"}:
+                return False, json.dumps({"grounded": False, "reason": "the answer could not be validated against the retrieved content"}, ensure_ascii=False)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        pass
 
     upper = normalized.upper()
     if upper.startswith("GROUNDED"):
@@ -337,7 +355,6 @@ def parse_grounding_result(result: str) -> tuple[bool, str]:
     if upper.startswith("NOT_GROUNDED"):
         return False, normalized
 
-    # Some models add a short preamble; preserve the original verdict if one is present.
     if "NOT_GROUNDED" in upper:
         return False, normalized
 
@@ -348,33 +365,12 @@ def parse_grounding_result(result: str) -> tuple[bool, str]:
     return False, f"NOT_GROUNDED\nReason: The answer could not be validated against the retrieved content.\n{normalized}"
 
 
+NO_CONTEXT_MESSAGE = "I don't have enough context in the indexed website to answer this question accurately."
+
+
 def build_fallback_answer(query: str, documents) -> str:
-    """Construct a grounded answer from the retrieved documents when the model output is empty or invalid."""
-    if not documents:
-        return (
-            "I couldn't find enough information in the indexed website to answer this question accurately."
-        )
-
-    snippets = []
-    for index, document in enumerate(documents[:3], start=1):
-        content = (document.content or "").strip()
-        if not content:
-            continue
-        text = content[:500].strip()
-        url = (document.metadata or {}).get("source_url") or (document.metadata or {}).get("url") or "source"
-        title = (document.metadata or {}).get("page_title") or (document.metadata or {}).get("title") or "Source"
-        snippets.append(f"{index}. {title}: {text} ({url})")
-
-    if not snippets:
-        return (
-            f"I found relevant website content for '{query}', but it did not include a clear direct answer."
-        )
-
-    joined = "\n\n".join(snippets)
-    return (
-        "Based on the indexed website content, here is the closest grounded answer:\n\n"
-        f"{joined}"
-    )
+    """Return a strict refusal without exposing raw retrieved snippets when context is weak or irrelevant."""
+    return NO_CONTEXT_MESSAGE
 
 
 def format_context(documents) -> str:
@@ -427,11 +423,77 @@ Content:
     return "\n\n".join(sections)
 
 
+GENERIC_PHRASES = {
+    "hi",
+    "hello",
+    "hey",
+    "bye",
+    "goodbye",
+    "thanks",
+    "thank you",
+    "how are you",
+    "who are you",
+    "what is your name",
+    "good morning",
+    "good evening",
+    "good night",
+}
+
+
+def is_generic_chat_query(query: str) -> bool:
+    """Heuristic fallback for obvious casual greetings and small talk."""
+    normalized = (query or "").strip().lower()
+    if not normalized:
+        return False
+
+    if normalized in GENERIC_PHRASES:
+        return True
+
+    return any(normalized.startswith(f"{phrase} ") for phrase in GENERIC_PHRASES)
+
+
+def should_retrieve_for_query(query: str) -> bool:
+    """Ask the LLM whether the question is about the indexed website; fall back to simple heuristics if needed."""
+    normalized = (query or "").strip()
+    if not normalized:
+        return False
+
+    if is_generic_chat_query(normalized):
+        logger.info("Heuristic relevance gate: non-site query detected for %s", query)
+        return False
+
+    try:
+        prompt = SITE_RELEVANCE_PROMPT.format(query=query)
+        response = invoke_with_backoff(llm, prompt)
+        content = (response.content or "").strip()
+        payload = json.loads(content)
+
+        if isinstance(payload, dict):
+            site_relevant = bool(payload.get("site_relevant", False))
+            reason = payload.get("reason") or ""
+            logger.info("LLM relevance check: site_relevant=%s reason=%s", site_relevant, reason)
+            return site_relevant
+
+        if isinstance(payload, str):
+            lowered = payload.strip().lower()
+            if lowered in {"true", "site_relevant"}:
+                logger.info("LLM relevance check: model echoed a string value; defaulting to site_relevant=True")
+                return True
+            if lowered in {"false", "not_site_relevant"}:
+                logger.info("LLM relevance check: model echoed a string value; defaulting to site_relevant=False")
+                return False
+    except Exception as exc:  # pragma: no cover - external model output may vary
+        logger.warning("LLM relevance check failed for '%s'; using fallback heuristic. Error: %s", query, exc)
+
+    return True
+
+
 def retrieve_node(state):
     logger.info("retrieve_node called")
     query = state["query"]
-    logger.info("Retrieving documents for query: %s", query)
+    logger.info("Processing query: %s", query)
 
+    logger.info("Retrieving documents for query: %s", query)
     documents = retriever.retrieve(
         query=query,
         top_k=5,
@@ -484,6 +546,14 @@ def generate_answer_node(state):
     )
     logger.info("Documents available for answer generation=%s", len(documents))
 
+    if not documents:
+        answer = "I don't have enough context in the indexed website to answer this question accurately."
+        logger.info("No retrieved documents available; refusing to answer from model knowledge")
+        return {
+            "answer": answer,
+            "sources": [],
+        }
+
     context = format_context(documents)
     prompt = SYSTEM_PROMPT.format(
         context=context,
@@ -491,7 +561,7 @@ def generate_answer_node(state):
     )
     logger.info("System prompt prepared; invoking LLM")
 
-    response = llm.invoke(prompt)
+    response = invoke_with_backoff(llm, prompt)
     answer = (response.content or "").strip()
     logger.info("LLM returned answer with length=%s", len(answer))
 
@@ -559,7 +629,7 @@ def grounding_node(state):
     )
     logger.info("Grounding prompt prepared; invoking LLM")
 
-    response = llm.invoke(prompt)
+    response = invoke_with_backoff(llm, prompt)
     result = (response.content or "").strip()
     grounded, normalized_result = parse_grounding_result(result)
 
@@ -591,14 +661,22 @@ def no_answer_node(state):
 
     query = state.get("query", "")
     documents = state.get("retrieved_documents", [])
-    fallback = build_fallback_answer(query, documents)
 
-    message = (
-        fallback
-        if fallback
-        else "I couldn't find enough information to answer this question from the indexed website."
-    )
-    logger.info("No-answer response prepared using fallback answer")
+    if is_generic_chat_query(query):
+        message = (
+            "I can answer questions about the indexed website, but this looks like a general conversation message. "
+            "Please ask a question related to the site content."
+        )
+        logger.info("No-answer response prepared for conversational query")
+        return {
+            "answer": message,
+            "sources": [],
+            "final_response": message,
+        }
+
+    fallback = build_fallback_answer(query, documents)
+    message = fallback if fallback else NO_CONTEXT_MESSAGE
+    logger.info("No-answer response prepared using strict no-context fallback")
 
     return {
         "answer": message,

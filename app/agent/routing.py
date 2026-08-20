@@ -33,6 +33,23 @@
 from app.logger import logger
 
 
+def route_after_query_relevance(state):
+    logger.info("route_after_query_relevance called with state keys=%s", list(state.keys()))
+
+    query_relevant = state.get(
+        "query_relevant",
+        False,
+    )
+    logger.info("query_relevant=%s", query_relevant)
+
+    if query_relevant:
+        logger.info("Routing decision: query relevant -> retrieve")
+        return "retrieve"
+
+    logger.info("Routing decision: query not relevant -> no_answer")
+    return "no_answer"
+
+
 def route_after_retrieval(state):
     logger.info("route_after_retrieval called with state keys=%s", list(state.keys()))
 
@@ -63,15 +80,5 @@ def route_after_grounding(state):
         logger.info("Routing decision: grounded -> finalize")
         return "finalize"
 
-    retry_count = state.get(
-        "retry_count",
-        0,
-    )
-    logger.info("retry_count=%s", retry_count)
-
-    if retry_count < 1:
-        logger.info("Routing decision: not grounded and retry_count < 1 -> regenerate")
-        return "regenerate"
-
-    logger.info("Routing decision: not grounded and retry limit reached -> no_answer")
+    logger.info("Routing decision: not grounded -> no_answer")
     return "no_answer"

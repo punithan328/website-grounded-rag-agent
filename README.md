@@ -17,18 +17,21 @@ This solution is designed to satisfy the MyAdvice AI Engineer assessment require
 
 ## Architecture
 
-![Website-grounded RAG architecture](architecture-diagram.svg)
+The current architecture follows a strict website-grounded flow: the query is first checked for relevance before any retrieval, the retrieved chunks are filtered for usefulness, the answer is generated from retrieved context only, and a second grounding check rejects unsupported answers with a no-context fallback.
 
+![Current website-grounded RAG architecture](architecture-diagram.svg)
 
 ### Major components
 
 - Crawler: discovers internal pages and fetches raw HTML
-- Extractor: removes boilerplate, scripts, footers, and noisy content
+- Validator + Registry: filters low-quality pages and tracks changed/unchanged/rejected states
+- Extractor + Cleaner: removes boilerplate, scripts, and noisy content
 - Chunker: splits content into retrieval-friendly chunks
 - Embeddings: generated using sentence-transformers
 - Vector store: ChromaDB persists chunk embeddings and metadata
-- LangGraph agent: orchestrates retrieve → evaluate → generate → ground
-- UI: optional Chainlit app for interactive exploration
+- LangGraph agent: performs query relevance → retrieve → evaluate → generate → ground → finalize
+- Strict fallback: when the query is irrelevant or the answer is not grounded, the app returns a no-context response instead of hallucinating
+- UI: Chainlit app that exposes the website-grounded question flow
 
 ## Key features
 

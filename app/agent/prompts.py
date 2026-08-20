@@ -41,16 +41,17 @@ Rules:
 
 - Every factual claim must be supported by the context.
 - Do not use external or pretrained knowledge.
-- If any important claim is unsupported, mark it as NOT GROUNDED.
+- If any important claim is unsupported, set "grounded" to false.
+- Keep the reason short and factual.
+- Return valid JSON only.
 
-Return exactly:
+Return this exact JSON shape:
 
-GROUNDED
+{{"grounded": true, "reason": "supported by the retrieved website content"}}
 
 or:
 
-NOT_GROUNDED
-Reason: <short explanation>
+{{"grounded": false, "reason": "the answer includes unsupported claims or missing evidence"}}
 
 User question:
 
@@ -63,6 +64,29 @@ Retrieved context:
 Proposed answer:
 
 {answer}
+"""
+
+SITE_RELEVANCE_PROMPT = """
+You are a router for a website-grounded Q&A system.
+
+Decide whether the user question is about the indexed website content.
+
+Return valid JSON only with this exact shape:
+
+{{"site_relevant": true, "reason": "question matches website content"}}
+
+or:
+
+{{"site_relevant": false, "reason": "this is a greeting, small talk, or unrelated request"}}
+
+Rules:
+- If the user is asking about the website, its docs, APIs, features, pages, products, or content in the indexed site, return true.
+- If the user is greeting, chatting, thanking, casual conversation, or asking something unrelated to the website, return false.
+- Do not use outside knowledge beyond the website context; this is only a relevance check.
+
+User question:
+
+{query}
 """
 from app.logger import logger
 
