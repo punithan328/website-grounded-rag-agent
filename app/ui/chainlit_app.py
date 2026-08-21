@@ -182,8 +182,8 @@ async def on_chat_start():
 
     await cl.Message(
         content=(
-            "# Website Grounded AI Assistant\n\n"
-            "Ask a question about the indexed website."
+            "# Website-Grounded RAG Agent\n\n"
+            "Ask a question about the indexed ChromaDB website."
         )
     ).send()
 

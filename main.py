@@ -23,3 +23,4 @@ for i, embedding in enumerate(embeddings):
     print(f"\nText {i + 1}: {texts[i]}")
     print("Embedding dimensions:", len(embedding))
     print("First 5 values:", embedding[:5])
+    
